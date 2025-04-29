@@ -4,8 +4,10 @@ from app.extensions import db, migrate, swagger
 from app.routes.user import user_bp
 from app.routes.auth import auth_bp
 from app.routes.customer import customer_bp
+from app.routes.project import project_bp
+from app.routes.task import task_bp
 from flask_jwt_extended import JWTManager
-from app.models import User
+from app.models import *
 
 
 def create_app(config_class=settings.DevelopmentConfig):
@@ -18,7 +20,6 @@ def create_app(config_class=settings.DevelopmentConfig):
     jwt = JWTManager(app)
 
     # Add Swagger Bearer token security definition
-    from app.utils.swagger_definitions import swagger_definitions
     app.config['SWAGGER'] = {
         'uiversion': 3,
         'basePath': '',
@@ -42,8 +43,7 @@ def create_app(config_class=settings.DevelopmentConfig):
                 'model_filter': lambda tag: True,
             }
         ],
-        'specs_route': '/apidocs/',
-        'definitions': swagger_definitions,
+        'specs_route': '/apidocs/'
     }
     app.config['SWAGGER']['lazy'] = True
 
@@ -51,9 +51,24 @@ def create_app(config_class=settings.DevelopmentConfig):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(user_bp)
     app.register_blueprint(customer_bp)
+    app.register_blueprint(project_bp)
+    app.register_blueprint(task_bp)
+    # Register new feature blueprints
+    from app.routes.comment import comment_bp
+    from app.routes.file_attachment import file_bp
+    from app.routes.subtask import subtask_bp
+    from app.routes.kanban import kanban_bp
+    from app.routes.calendar import calendar_bp
+    app.register_blueprint(comment_bp)
+    app.register_blueprint(file_bp)
+    app.register_blueprint(subtask_bp)
+    app.register_blueprint(kanban_bp)
+    app.register_blueprint(calendar_bp)
 
     # Now, initialize swagger (after blueprints)
+    from flasgger import swag_from
     swagger.init_app(app)
+
 
     from app.middleware import validate_session_and_scope
     
